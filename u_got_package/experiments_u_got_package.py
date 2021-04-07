@@ -154,7 +154,7 @@ def run_episode(env, agent, train=False, render=False):
         action_index=agent.get_action_by_policy(state_index)
         if render:
             env.display(action_index)
-        next_state_index, reward, done, got_package= env.step(action_index)
+        next_state_index, reward, done, got_package= env.step(action_index, render)
         total_reward += reward
         if train:
             agent.train(state_index, action_index, next_state_index, reward)

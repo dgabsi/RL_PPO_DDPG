@@ -1,7 +1,7 @@
 import torch
 import numpy as np
-from repley_memory import ReplayMemory
-from actor_critic_networks import Actor, Critic
+from .replay_memory import ReplayMemory
+from .ddpg_actor_critic_networks import Actor, Critic
 import torch.optim as optim
 import torch.nn as nn
 import utils
@@ -164,17 +164,26 @@ class DDPG_Agent():
 
 
     def return_action_by_policy(self, observation, train=False):
+        '''
+        Return an action according to the current policy(Which is the current actor)
+        :param observation:
+        :param train:
+        :return: action
+        '''
 
         self.Actor.eval()
+        #Convert from numpy form to torch
         state=self.convert_inner_types_to_outer(observation, flag_outer_to_inner=True)
         with torch.no_grad():
             action=self.Actor.forward(state.unsqueeze(0)).squeeze().detach().cpu()
             if train:
+                #If in train mode we add a noise to induce  exploration
                 self.noise=au_noise(self.noise)
                 action=self.convert_inner_types_to_outer(action)+self.noise
             else:
                 action = self.convert_inner_types_to_outer(action)
         self.Actor.train()
+        #Clipping the actions values to the boundaries permitted (although this is not essential since we use the Tanh..)
         cliped_action=np.clip(action, self.low_bound_actions, self.high_bound_actions)
 
         return cliped_action
@@ -205,10 +214,16 @@ class DDPG_Agent():
         '''
 
         if filename_critic:
-            self.Critic, self.optimizer_critic, self.Critic_target=utils.load_model(models_dir, filename_critic)
+            critic_state_dict, optimizer_critic_state_dict, critic_target_state_dict=utils.load_model(models_dir, filename_critic)
+            self.Critic.load_state_dict(critic_state_dict)
+            self.optimizer_critic.load_state_dict(optimizer_critic_state_dict)
+            self.Critic_target.load_state_dict(critic_target_state_dict)
 
         if filename_actor:
-            self.Actor, self.optimizer_actor, self.Actor_target=utils.load_model(models_dir, filename_actor)
+            actor_state_dict, optimizer_actor_state_dict, actor_target_state_dict=utils.load_model(models_dir, filename_actor)
+            self.Actor.load_state_dict(actor_state_dict)
+            self.optimizer_actor.load_state_dict(optimizer_actor_state_dict)
+            self.Actor_target.load_state_dict(actor_target_state_dict)
 
     def update_auc_noise(self, mean=0, std=0.2,  theta=0.15, dt=1e-2):
 

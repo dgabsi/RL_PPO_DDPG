@@ -224,7 +224,7 @@ class U_GotPackage():
 
         return state_index2tuple, state_tuple2index
 
-    def step(self, action_index):
+    def step(self, action_index, render=False):
         '''
         Play one step in the game according to the action parameter
         :param action_index: action index (0-3) according to [up, down, left, right]
@@ -279,6 +279,8 @@ class U_GotPackage():
                     self.game_stats['done'] = self.time
                     self.game_stats['got package'] = self.time
                     got_package = True
+                    if render:
+                        print("Well done! Package is yours")
                 else:
                     reward += self.REWARD_TIME_WASTE #If arrived without all documents recieve a penalty
             # Handle council office- Here we recieve utility bill
@@ -339,6 +341,8 @@ class U_GotPackage():
                 self.jobs_pay['job2'] += (0 if self.jobs_pay['job2'] == 0 else -1)
                 if (earned_until_now + self.jobs_pay['job1'] + self.jobs_pay['job2']) < self.MAX_SUM_PAY:
                     done = True
+                    if render:
+                        print("Sorry! Agent failed. No potential of earning money to pay customs")
 
         self.agent_state = StateTuple(new_position_y, new_position_x, has_utility_bill, has_paid_customs,
                                       has_vacc_approval, earned_until_now)
@@ -348,6 +352,8 @@ class U_GotPackage():
 
         if self.time >= self.TIME_LIMIT:
             done = True
+            if render:
+                print("Sorry! Passed time limit")
 
         return state_index, reward, done, got_package
 
@@ -377,22 +383,36 @@ class U_GotPackage():
         return state_index
 
     def find_empty_position(self):
+        '''
+        Find en ampty position in the grid
+        :return: position as a list of two value for [y, x]
+        '''
 
         position = np.random.randint(self.N, size=2)
+
         while self.grid[position[0], position[1]] > 0:
+            #If it is a number above 0 it means it is Occupied.
             position = np.random.randint(self.N, size=2)
 
         return position
 
     def proximity_people(self, position_y, position_x):
-        proximity = 3
+        '''
+        Return the min proximity to people from the input position
+        :param position_y:
+        :param position_x:
+        :return:
+        '''
+        proximity = 3 #We want to minimise this . It will only matter if it is under 2 so 3 is fine
         people_positions = np.argwhere(self.grid == self.people.grid_number)
         all_proximity = []
 
+        # To be close it mean  that  in one column or row the same as a person and in the other position less or equal to 1.
         for position in people_positions:
             if position_x == position[1]:
                 prox_y = abs(position_y - position[0])
                 if prox_y <= 1:
+                    #It has to be at least in on column or row
                     all_proximity.append(prox_y)
             if position_y == position[0]:
                 prox_x = abs(position_x - position[1])
@@ -400,11 +420,15 @@ class U_GotPackage():
                     all_proximity.append(prox_x)
 
         if len(all_proximity):
-            proximity = min(all_proximity)
+            proximity = min(all_proximity) #min proximity from the list
 
         return proximity
 
     def display2(self):
+        '''
+        display grid as a matplotlib
+        :return:
+        '''
 
         color_GP = ("r" if self.agent_state.has_vacc_approval else "b")
         color_BA = ("r" if self.agent_state.has_paid_customs else "b")
@@ -453,7 +477,14 @@ class U_GotPackage():
         print(f'Has vacc approval: {bool(self.agent_state.has_vacc_approval)}')
 
     def map_display(self, position_y, position_x):
+        #'''
+        #This funtion serves the function display (the next function). maps a position to a color and letter
+        #:param position_y:
+        #:param position_x:
+        #:return: (letter, color) mapping of the input position
+        #'''
 
+        #maps a position to a color and letter
         if self.grid[position_y, position_x] == self.bank.grid_number:
             return self.bank.grid_letter, self.bank.grid_color
         elif self.grid[position_y, position_x] == self.gp.grid_number:
@@ -472,8 +503,13 @@ class U_GotPackage():
             return ' | ', 'grey'
 
     def display(self, action_index=None):
+        '''
+        Main display function. display the grid as a printing with color for stations and a marker for current poistion of the agent
+        :param action_index: Showing a prinign of this input action. Can be used to display the next action in order to understand the running of the game
+        :return:
+        '''
 
-        action = self.ACTIONS[action_index]
+
 
         envir_display = self.grid.copy()
         envir_display[self.agent_state.position_y, self.agent_state.position_x] = 1
@@ -509,60 +545,13 @@ class U_GotPackage():
             f'UTILITY: {bool(self.agent_state.has_utility_bill)} PAID CUSTOMS: {bool(self.agent_state.has_paid_customs)} ')
         print(f'VACC APPROVAL: {bool(self.agent_state.has_vacc_approval)} MONEY_EARNED: {self.agent_state.money}')
 
-    def display3(self):
-
-        cell_size = 50
-
-        color_GP = ("r" if self.agent_state.has_vacc_approval else "b")
-        color_BA = ("r" if self.agent_state.has_paid_customs else "b")
-        color_CO = ("r" if self.agent_state.has_utility_bill else "b")
-
-        image_grid = np.zeros((self.N * cell_size, self.N * cell_size, 3), dtype=np.uint8)
-
-        for position_y in range(self.grid.shape[0]):
-            for position_x in range(self.grid.shape[1]):
-                if self.grid[position_y, position_x] == self.people.grid_number:
-                    image_grid[position_y * cell_size:position_y * cell_size + cell_size,
-                    position_x * cell_size:position_x * cell_size + cell_size] = [0, 0, 255]
-                if self.grid[position_y, position_x] == self.bank.grid_number:
-                    image_grid[position_y * cell_size:position_y * cell_size + cell_size,
-                    position_x * cell_size:position_x * cell_size + cell_size] = [0, 255, 0]
-                if self.grid[position_y, position_x] == self.gp.grid_number:
-                    image_grid[position_y * cell_size:position_y * cell_size + cell_size,
-                    position_x * cell_size:position_x * cell_size + cell_size] = [0, 255, 0]
-                if self.grid[position_y, position_x] == self.post_office.grid_number:
-                    image_grid[position_y * cell_size:position_y * cell_size + cell_size,
-                    position_x * cell_size:position_x * cell_size + cell_size] = [0, 255, 0]
-                if self.grid[position_y, position_x] == self.council_office.grid_number:
-                    image_grid[position_y * cell_size:position_y * cell_size + cell_size,
-                    position_x * cell_size:position_x * cell_size + cell_size] = [0, 255, 0]
-                if self.grid[position_y, position_x] == self.job1.grid_number:
-                    image_grid[position_y * cell_size:position_y * cell_size + cell_size,
-                    position_x * cell_size:position_x * cell_size + cell_size] = [255, 0, 0]
-                if self.grid[position_y, position_x] == self.job2.grid_number:
-                    image_grid[position_y * cell_size:position_y * cell_size + cell_size,
-                    position_x * cell_size:position_x * cell_size + cell_size] = [255, 0, 0]
-
-        image_grid[self.agent_state.position_y * cell_size:self.agent_state.position_y * cell_size + cell_size,
-        self.agent_state.position_x * cell_size:self.agent_state.position_x * cell_size + cell_size] = [255, 255, 255]
-
-        Image.fromarray(image_grid, "RGB")
-
-        font = cv2.FONT_HERSHEY_SIMPLEX
-
-        image_grid = cv2.putText(image_grid, 'CO', (10, 30), font, 1, (255, 255, 255), 2, cv2.LINE_AA)
-        image_grid = cv2.putText(image_grid, 'GP', (460, 30), font, 1, (255, 255, 255), 2, cv2.LINE_AA)
-        image_grid = cv2.putText(image_grid, 'PO', (460, 490), font, 1, (255, 255, 255), 2, cv2.LINE_AA)
-        image_grid = cv2.putText(image_grid, 'BA', (255, 280), font, 1, (255, 255, 255), 2, cv2.LINE_AA)
-
-        cv2.imshow("u got package", image_grid)
-        print('Agent state:')
-        print(f'Position X: {self.agent_state.position_x} Position Y: {self.agent_state.position_y}')
-        print(
-            f'Has utility bill: {bool(self.agent_state.has_utility_bill)} Has paid customs: {bool(self.agent_state.has_paid_customs)} ')
-        print(f'Has vacc approval: {bool(self.agent_state.has_vacc_approval)}')
 
     def translate_q_values_to_position_grid(self, q_values_matrix):
+        '''
+
+        :param q_values_matrix:
+        :return:
+        '''
 
         q_values_grid = np.zeros((self.N, self.N))
 
