@@ -2,14 +2,15 @@
 # Code for course Reinforcement learning
 ### Daniela Stern- Gabsi
 
-### github- dgabsi/707project
+### github- dgabsi/RL_project_707
+
 (updats were made from danielaneuralx which is my working github but its all mine)
 
 This project includes 4 different main tasks. The first task I will build an environment based on a famous Israel board game 
 where your aim is to pickup a package. The second task I will build and agent using the Q learning algorithm, and I will 
 demonstrate that by using this algorithm the agent is abel to play the game successfully without prior knowledge of the game rules.
 In the third task I will implement an advanced Reinforcement learning algorithm-The DDPG algorithm which is based on Deterministic policy gradient approximation
-.I will use the Lunar Lander Gym environment. In the fourth taks I will use another model-the Proximal Policy Optimization (PPO) 
+.I will use the Lunar Lander Gym environment. In the fourth task I will use another model-the Proximal Policy Optimization (PPO) 
 which is a very effective and stable model for policy approximation.
 The code is implemented in pytorch.
 Main notebooks are:
@@ -25,6 +26,7 @@ Project structure:
 - luna_lander (package- task 3+4)
     - experiments (Directory for tensorboard)
     - saved (Directory for pickles and saved models)
+      -best
     - __init__.py
     - agent_ddpg.py
     - ddpg_actor_critic_networks.py
@@ -51,17 +53,17 @@ packages needed :
 - torch
 - datetime
 - time
-- itertools
+- collections
 - matplotlib
 - numpy
 - pandas
-- pytorch
-- pyyaml
+- termcolor
+- gym
 - scikit-learn
-- torchsummary
-- torchvision
-- yaml
-- abc
-- enum
+- tensorboard
 - math
 - random
+- pickle
+
+- please install gym box2 : pip install Box2D gym
+  (more instructions are at https://github.com/openai/gym/blob/master/docs/environments.md)

@@ -3,21 +3,21 @@ from .qlearning_agent import QLearnAgent
 import numpy as np
 import os
 import matplotlib.pyplot as plt
-import utils
+from .utils import save_to_pickle
 
 
 
 SAVED_DIR='./saved'
 
-NUM_EXPERIMENTS=10
+NUM_EXPERIMENTS=2
 
 #Number of episodes in each experiment
-NUM_EPISODES=1000
+NUM_EPISODES=3
 
 
 #Environemnt configurations
 #Environemnt sizes
-ENVIRONMENT_PARAMS={'N':[10], 'CUSTOMS_PAYS':[2,4]}
+ENVIRONMENT_PARAMS={'N':[10], 'CUSTOMS_PAYS':[2]}
 
 #Reward on wate on time- this is the fine for coming to a station with no right document or twice.
 #We will examine if when the penalry is small will the agent still do the safe  option of going to the gp
@@ -25,14 +25,14 @@ ENVIRONMENT_PARAMS={'N':[10], 'CUSTOMS_PAYS':[2,4]}
 
 
 #Agent Hyperparameters
-AGENT_PARAMS={'GAMMAS':[0.9], 'STEP_SIZES':[0.2, 0.5, 0.8], 'EPSILONS':[1.,0.9, 0.6]}
+AGENT_PARAMS={'GAMMAS':[0.3], 'STEP_SIZES':[0.2], 'EPSILONS':[0.6]}
 
 
 #RUNS_DIR='./experiments'
 EPSILON_DECAY=0.999
 EPSILON_MIN=0.1
 
-def run_experiments(num_experiments, num_episodes,env_search_config, agent_search_config, epsilon_decay, epsilon_min, models_dir, save_agent=True):
+def run_experiments(num_experiments, num_episodes,env_search_config, agent_search_config, epsilon_min, models_dir, train=True, render=False, save_agent=True, episode_avg=20):
     '''
     Run Q learning experiments in the U got package environment. calculate statistics according to different configuration of the agent.
     The agent different configurations will be explored in a grid search manner
@@ -54,12 +54,8 @@ def run_experiments(num_experiments, num_episodes,env_search_config, agent_searc
                 for epsilon in agent_search_config['EPSILONS']:
                     for custom_pay in env_search_config['CUSTOMS_PAYS']:
                         env = U_GotPackage(N, custom_pay)
-                        qlearning_agent=QLearnAgent(env.num_states, env.num_actions, gamma, step_size, epsilon, epsilon_decay,epsilon_min)
+                        qlearning_agent=QLearnAgent(env.num_states, env.num_actions, gamma, step_size, epsilon,epsilon_min)
                         env.reset()
-
-                        #params_name=f"env: {N} reward waste: {reward_waste} customs_pay: {custom_pay } gamma: {gamma} step size: {step_size} epsilon {epsilon} "
-                        #writer_name = os.path.join(RUNS_DIR, params_name)
-                        # writer = SummaryWriter(writer_name)
 
                         #These arrays will collect statistics of each episode/ experiment pair in the current configuration
                         rewards_per_episode=np.zeros((num_episodes, num_experiments))
@@ -77,26 +73,28 @@ def run_experiments(num_experiments, num_episodes,env_search_config, agent_searc
 
                         #Running all experiment for the configuration
                         for exper in range(num_experiments):
-                            qlearning_agent.reset_agent()
+                            qlearning_agent.reset_agent(num_episodes)
                             for episode in range(num_episodes):
                                 #Run episode games
-                                total_reward, time_steps, got_package= run_episode(env,qlearning_agent, train=True)
+                                total_reward, time_steps, got_package= run_episode(env,qlearning_agent, train=train,render=render )
+
+                                running_avg_total_reward=(np.sum(rewards_per_episode[episode-episode_avg:episode, exper]) + total_reward)//episode_avg
+
 
                                 if not episode%20:
-                                    print(f'Exper:{exper} Epis{episode} Reward:{total_reward} Timesteps:{time_steps} GotPackage:{got_package} Vacctime:{env.game_stats["has vac approval"]} Utility time:{env.game_stats["has utility bill"]} Customs time:{env.game_stats["paid customs"]} Money:{env.game_stats["money earned"]}')
+                                    print(f'Expr:{exper} Eps:{episode} RunnAReward:{running_avg_total_reward} Reward:{total_reward} Timesteps:{time_steps} GotPack:{got_package} Utiltime:{env.game_stats["has utility bill"]} Customstime:{env.game_stats["paid customs"]} Money:{env.game_stats["money earned"]}')
 
-                                        #if not episode%exploration_decay_freq:
+
                                 #Decay the epsilon each episode
                                 qlearning_agent.decay_epsilon()
 
                                 #Update statisitcs arrays
-                                rewards_per_episode[episode, exper]=total_reward
+                                rewards_per_episode[episode, exper] = total_reward
                                 timestep_per_episode[episode, exper] = time_steps
                                 got_package_per_episode[episode, exper]=float(got_package)
 
                             grid_q_values=env.translate_q_values_to_position_grid(qlearning_agent.q_values)
-                            #print(grid_q_values)
-                            #print(grid_q_values.shape)
+
                             q_values_img=np.expand_dims(grid_q_values,2)
                             #print(q_values_img.shape)
                             q_values[exper]=grid_q_values
@@ -134,7 +132,7 @@ def run_experiments(num_experiments, num_episodes,env_search_config, agent_searc
 
 
 
-def run_episode(env, agent, train=False, render=False):
+def run_episode(env, agent, train=True, render=False):
     '''
     Run one episode in the environment
     :param env: environment
@@ -166,10 +164,10 @@ def run_episode(env, agent, train=False, render=False):
 
 if __name__ == '__main__':
 
-    results_dict, q_values_dict=run_experiments(NUM_EXPERIMENTS, NUM_EPISODES,  ENVIRONMENT_PARAMS, AGENT_PARAMS, EPSILON_DECAY, EPSILON_MIN, SAVED_DIR, False)
+    results_dict, q_values_dict=run_experiments(NUM_EXPERIMENTS, NUM_EPISODES,  ENVIRONMENT_PARAMS, AGENT_PARAMS, EPSILON_DECAY, EPSILON_MIN, SAVED_DIR, save_agent=False)
 
-    filename_results = os.path.join(SAVED_DIR, 'task2_experiments_results.pickle')
-    filename_q_values = os.path.join(SAVED_DIR, 'task2_experiments_q_values.pickle')
-    utils.save_to_pickle(results_dict, filename_results)
-    utils.save_to_pickle(results_dict, filename_q_values)
+    #filename_results = os.path.join(SAVED_DIR, 'task2_experiments_results.pickle')
+    #filename_q_values = os.path.join(SAVED_DIR, 'task2_experiments_q_values.pickle')
+    #save_to_pickle(results_dict, filename_results)
+    #save_to_pickle(results_dict, filename_q_values)
 

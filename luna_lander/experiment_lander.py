@@ -8,7 +8,7 @@ import torch
 import datetime
 from .utils import plot_all_experiments,plot_episodes,save_to_pickle
 
-
+'''
 SAVED_DIR='./saved'
 RUNS_DIR='./experiments'
 NUM_EPISODES=1000
@@ -26,13 +26,12 @@ CONFIGS_LUNA_LANDER=[{'run_name':"critic:400-300 actor:400-300 lr actor 5e-5 lr 
 
 NUM_EXPERIMENTS=2
 BATCH_SIZE=64
+'''
 
-#AGENT_config_bipedal={'run_name':"critic:400-300 actor:400-300 bs:64", 'batch_size':64, "critic_linear_sizes":[400,300], "actor_linear_sizes":[400,300],  "config_optim_actor":{'lr':0.0001},
-#"config_optim_critic":{"lr":0.001, 'weight_decay': 0.001}, "memory_capacity":1000000, "tau": 0.001, "gamma": 0.99}
 
 def run_episodes(env, agent, writer, num_episodes, num_episodes_avg=20, train=False, save_freq=100, models_dir=None, filename_critic=None, filename_actor=None, save_rewards=150,game_solved_reward=200, render=False, agnet_type='DDPG'):
     '''
-    Run one experiments on the Lunar lander environment for numer of episodes(parameters).
+    Run one experiments on the Lunar lander environment for number of episodes(parameters).
     Save checkpoints if requested, Return running average rewards
     '''
 
@@ -112,7 +111,7 @@ def run_episodes(env, agent, writer, num_episodes, num_episodes_avg=20, train=Fa
     return running_avg_rewards, running_avg_timesteps,max_reward,number_times_solved
 
 
-def experiment_luna_lander(device, runs_dir, models_dir, num_episodes, config_agents, num_experiments, num_episodes_avg=10, save_freq=50, train=True, model_evaluate=None, one_model_return=False, agent_type='DDPG'):
+def experiment_luna_lander(device, runs_dir, models_dir, num_episodes, config_agents, num_experiments, num_episodes_avg=20, save_freq=50, train=True, model_evaluate=None, one_model_return=False, agent_type='DDPG', render=False):
     '''
     Run multiple experiments -creating and training an agent on the Lunar lander environment
     Looping on different configurations(hyperparam search) and collect and plot experiment rewards statistics
@@ -152,22 +151,25 @@ def experiment_luna_lander(device, runs_dir, models_dir, num_episodes, config_ag
         #On each configuration running multiple experiments(parameter)
         print(f"*********Start Running config: {config['run_name']}*************")
         for experiment in range(num_experiments):
-            #Creating tensorboard writer for each experiment
-            writer_name = os.path.join(runs_dir, 'luna_lander_ddpg_cont_'+ config['run_name']+'_expr:'+str(experiment)) #'ddpg lunalander'
-            writer = SummaryWriter(writer_name)
-            #Prepare names of checkpints files
+            #Prepare names of checkpoints files and writers for tensorboard
             if agent_type == 'DDPG':
+                # Creating tensorboard writer for each experiment
+                writer_name = os.path.join(runs_dir, 'luna_lander_ddpg_cont_' + config['run_name'] + '_expr:' + str(experiment))  # 'ddpg lunalander'
+                writer = SummaryWriter(writer_name)
                 actor_filename='ddpg_lunal_ACTOR' + config['run_name']+'expr:_'+str(experiment)
                 critic_filename = 'ddpg_lunal_CRITIC' + config['run_name'] + 'expr:_' +str(experiment)
             else:
+                # Creating tensorboard writer for each experiment
+                writer_name = os.path.join(runs_dir, 'luna_lander_ppo_' + config['run_name'] + '_expr:' + str(experiment))  # 'ddpg lunalander'
+                writer = SummaryWriter(writer_name)
                 actor_filename = 'ppo_lunal_ACTOR' + config['run_name'] + 'expr:_' + str(experiment)
                 critic_filename = 'ppo_lunal_CRITIC' + config['run_name'] + 'expr:_' + str(experiment)
             if model_evaluate is None:
                 if agent_type=='DDPG':
                     #Create agent according to the configuration
-                    agent=DDPG_Agent(device, observation_dim, action_dim, action_space_low, action_space_high, config, writer, SAVED_DIR,actor_filename,critic_filename)
+                    agent=DDPG_Agent(device, observation_dim, action_dim, action_space_low, action_space_high, config, writer, models_dir,actor_filename,critic_filename)
                 else:
-                    agent = PPO_Agent(device, observation_dim, action_dim, config, writer,SAVED_DIR,actor_filename,critic_filename)
+                    agent = PPO_Agent(device, observation_dim, action_dim, config, writer,models_dir,actor_filename,critic_filename)
                 #Load a saved agent if requested
                 if config["checkpoint"] is not None:
                     agent.load_model_and_optimizer(models_dir, config["checkpoint"]["critic"], config["checkpoint"]["actor"])
@@ -175,7 +177,7 @@ def experiment_luna_lander(device, runs_dir, models_dir, num_episodes, config_ag
                 agent=model_evaluate
             #Running experiment episodes
             rewards, num_timesteps, max_reward,number_times_solved=run_episodes(env, agent, writer, num_episodes, num_episodes_avg=num_episodes_avg, train=train, \
-                                                save_freq=save_freq, models_dir=models_dir, filename_critic=critic_filename, filename_actor=actor_filename, agnet_type=agent_type)
+                                                save_freq=save_freq, models_dir=models_dir, filename_critic=critic_filename, filename_actor=actor_filename, agnet_type=agent_type, render=render)
             #After finish running on experiment collects its statistics
             all_total_mean_reward[experiment]=rewards
             all_total_mean_timesteps[experiment]= num_timesteps
@@ -199,8 +201,8 @@ def experiment_luna_lander(device, runs_dir, models_dir, num_episodes, config_ag
         else:
             title_mean = "Lunal_PPO_mean_rewards_" + config['run_name']
             title_timestep = "Lunal_PPO_mean_num_timesteps_" + config['run_name']
+        #Plot configuration episodes
         plot_episodes(mean_rewards,std_rewards,max_rewards,'Average and max Rewards',title_mean, models_dir, title_mean)
-        title = "Lunal_DDPG_mean_num_timesteps\n" + config['run_name']
         plot_episodes(mean_timesteps, std_timesteps,max_timesteps,'Average and max num timesteps',title_timestep, models_dir, title_timestep)
         list_rewards_means_experiments.append(mean_rewards)
         list_rewards_stds_experiments.append(std_rewards)
@@ -224,7 +226,10 @@ def experiment_luna_lander(device, runs_dir, models_dir, num_episodes, config_ag
     #Labels are the run name-which identifies the configuration
     dict_results['labels'] = labels
     #Plot all configuration and compare (each configuration is shown with its avarges)
-    title='Luna lander DDPG experiments'
+    if agent_type == 'DDPG':
+        title='Luna lander DDPG experiments'
+    else:
+        title = 'Luna lander PPO experiments'
     plot_all_experiments(list_rewards_means_experiments, labels, 'Average Rewards', title,models_dir, title+'_Average_rewards')
     plot_all_experiments(list_timesteps_means_experiments, labels, 'Average num timesteps', title, models_dir, title+'_Average_timesteps')
 
@@ -235,8 +240,6 @@ def experiment_luna_lander(device, runs_dir, models_dir, num_episodes, config_ag
 
 
 
-def evaluate_ddpg(env, num_experiments, num_episodes, agent_checkpint):
-    pass
 
 if __name__ == '__main__':
 
@@ -248,6 +251,7 @@ if __name__ == '__main__':
 
     #dict_results=train_luna_lander(device, RUNS_DIR, SAVED_DIR, NUM_EPISODES, CONFIGS_LUNA_LANDER, NUM_EXPERIMENTS)
     #utils.save_to_pickle(dict_results, os.path.join(SAVED_DIR, 'all_results_dict.pkl'))
+    '''
     NUM_EPISODES = 10
     BEST_LUNA_LANDER = [{'run_name': "critic:600-300_actor:600-300_lractor:3e-5_lrcritic:3e-4", 'batch_size': 64,
                            "critic_linear_sizes": [600, 300], "actor_linear_sizes": [600, 300],
@@ -278,3 +282,4 @@ if __name__ == '__main__':
 
     dict_results = experiment_luna_lander(device, RUNS_DIR, SAVED_DIR, NUM_EPISODES, CONFIGS_PPO_LUNA_LANDER, NUM_EXPERIMENTS,
                                           num_episodes_avg=20, train=True, agent_type='PPO')
+    '''

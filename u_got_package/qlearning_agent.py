@@ -1,15 +1,15 @@
 import numpy as np
 import matplotlib.pyplot as plt
-import u_got_package
-import utils
+from  .utils import save_to_pickle, load_from_pickle
+from .policies import Policy
 import os
 
-class QLearnAgent(u_got_package.Policy):
+class QLearnAgent(Policy):
     '''
     Agent that acts according to the q learning algorithm. Acting according to an e-greedy policy and calculating q values according to q learning
     The class is also a policy(e-greedy) , inheriting from Policy class
     '''
-    def __init__(self, num_observations, num_actions, gamma, step_size, epsilon, epsilon_decay, epsilon_min):
+    def __init__(self, num_observations, num_actions, gamma, step_size, epsilon, epsilon_min):
         '''
         Constructor . Initialization of attributes. Creating the q values matrix
         :param num_observation- observation space size(int)
@@ -24,7 +24,7 @@ class QLearnAgent(u_got_package.Policy):
 
         super(QLearnAgent, self).__init__()
         self.num_actions=num_actions
-        self.epsilon_decay=epsilon_decay
+        self.epsilon_decay=0
         self.num_observations=num_observations
         self.start_epsilon=epsilon
         self.epsilon = epsilon
@@ -32,7 +32,7 @@ class QLearnAgent(u_got_package.Policy):
         self.gamma = gamma
         self.step_size = step_size
         self.q_values=np.zeros((self.num_observations,self.num_actions))
-        self.reset_agent()
+
 
 
     def get_action_by_policy(self, observation_index):
@@ -48,7 +48,7 @@ class QLearnAgent(u_got_package.Policy):
 
         else:
             index_max_action = np.argwhere(
-                self.q_values[observation_index, :] == np.max(self.q_values[observation_index, :]))
+            self.q_values[observation_index, :] == np.max(self.q_values[observation_index, :]))
 
             if len(
                     index_max_action) > 1:  # In case there is more than 1 action with the same max value-return a random action among them.
@@ -64,20 +64,21 @@ class QLearnAgent(u_got_package.Policy):
         :return:None
         '''
 
-        new_epsilon = self.epsilon * self.epsilon_decay
+        new_epsilon = self.epsilon - self.epsilon_decay
         if new_epsilon > self.epsilon_min:
             self.epsilon = new_epsilon
         else:
             self.epsilon = self.epsilon_min
 
 
-    def reset_agent(self):
+    def reset_agent(self, num_episodes):
         '''
         Reseting the agent. Zero out q values table and return epsilon to start value
         '''
         #self.reset_episode()
         self.q_values = np.zeros((self.num_observations, self.num_actions))
         self.epsilon = self.start_epsilon
+        self.epsilon_decay=(self.start_epsilon-self.epsilon_min)/num_episodes
 
 
     def train(self, observation, action, next_observation, reward):
@@ -103,13 +104,13 @@ class QLearnAgent(u_got_package.Policy):
     def save_agent_to_pickle(self, models_dir, filename):
 
         filename = os.path.join(models_dir, filename)
-        utils.save_to_pickle(self, filename)
+        save_to_pickle(self, filename)
 
     @staticmethod
     def load_agent_from_pickle(models_dir, filename):
 
         filename = os.path.join(models_dir, filename)
-        agent=utils.load_from_pickle(filename)
+        agent= load_from_pickle(filename)
 
         return agent
 

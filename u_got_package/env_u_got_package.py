@@ -44,13 +44,16 @@ class U_GotPackage():
 
         Bank branch :
         Here you can pay Customs payment
-        you need to have utility bill before recieving the service.
+        you need to have utility bill before recieving the service and enough money to cpay customs, The money needed to pay is a parameter.
         Sometimes when in a bad mood they can send you to bring also a vaccination approval
 
 
         Council office:
         Here you can get a new copy of the utility bill.
         Sometimes when in a bad mood they can send you to bring also a vaccination approval
+
+        Jobs:
+        Job1, Job2 - Here you can earn money to pay customs (Job1 :3, job2:2). But you can only do the job one and there is timely paycut of -1 each N**2 steps
 
 
         GP:
@@ -60,7 +63,7 @@ class U_GotPackage():
         You have to keep you social distancing from people and will have to keep at least 1 cell apart. otherwise get a bad reward.
 
         state:
-        (position_y, position_x, has_utility_bill, has_paid_customs, has_vacc_approval)
+        (position_y, position_x, has_utility_bill, has_paid_customs, has_vacc_approval, money earned)
         """
 
     def __init__(self, N=10, custom_pay=2):
@@ -70,28 +73,28 @@ class U_GotPackage():
         :param custom_pay: money amount needed to pay customs at the bank
         '''
 
-        # env_dict=predefined_environments[env_type]
+
         # Initalization of constants
         self.N = N
         self.ACTIONS = [up, down, left, right]
         self.CUSTOM_PAY = custom_pay
         #Timesteps for a paycut(of 1) in the money from jobs
-        self.TIMEUNITS_PAYCUT = 2 * N ** 2
+        self.TIMEUNITS_PAYCUT = 1 * N ** 2
         #Rewards are adjusted to each environemnt
         self.COUNCIL_OFFICE_REWARD = 3 * (N ** 2)
         self.BANK_REWARD = 6 * (N ** 2)
         self.GP_REWARD = (N ** 2)
         # self.TIMEUNITS_GAME_OVER= 20 * (self.N ** 2)
         #Fine for not keeping one cell apart form people
-        self.PEOPLE_BUMP_REWARD = -1 * N // 2
+        self.PEOPLE_BUMP_REWARD = -1 * N // 3
 
         #Rewards for arriving to a station without correct documents or after recieving the service
-        self.REWARD_TIME_WASTE = -N
+        self.REWARD_TIME_WASTE = -N//2
         #Number of people in the environemnt
         self.NUM_PEOPLE_ALLOCATE = self.N // 4
         self.PROBABILITY_VACC_COUNCIL=0.7
-        self.PROBABILITY_VACC_BANK=0.3
-        self.TIME_LIMIT=20 * (self.N ** 2)
+        self.PROBABILITY_VACC_BANK=0.4
+        self.TIME_LIMIT=30 * (self.N ** 2)
 
         #station values  -namedtuple('Station', 'name, grid_number, reward_success, grid_position, grid_letter, grid_color')
         self.stations_mapping = {'post office': Station('post office', 4, 0, (N - 1, N - 1), ' PO', 'magenta'),
@@ -248,20 +251,16 @@ class U_GotPackage():
         has_vacc_approval = self.agent_state.has_vacc_approval
         earned_until_now = self.agent_state.money
 
-        #print("stepy:", self.agent_state.position_y)
-        #print("stepx:", self.agent_state.position_x)
+
 
         #New positions
         new_position_y = self.agent_state.position_y + action.delta_y
         new_position_x = self.agent_state.position_x + action.delta_x
 
-        #print("step y:", new_position_y)
-        #print("step x:", new_position_x)
-        #print(action.string_action)
 
         # If off the grid, stay in position and recieve penalty
         if ((new_position_y in [-1, self.N]) or (new_position_x in [-1, self.N])):
-            reward += -1
+            #reward += -1
             new_position_x = self.agent_state.position_x
             new_position_y = self.agent_state.position_y
             stay = 1
@@ -339,7 +338,7 @@ class U_GotPackage():
             if not self.time % self.TIMEUNITS_PAYCUT:  #Perform a timely payecut of -1
                 self.jobs_pay['job1'] += (0 if self.jobs_pay['job1'] == 0 else -1)
                 self.jobs_pay['job2'] += (0 if self.jobs_pay['job2'] == 0 else -1)
-                if (earned_until_now + self.jobs_pay['job1'] + self.jobs_pay['job2']) < self.MAX_SUM_PAY:
+                if (earned_until_now + self.jobs_pay['job1'] + self.jobs_pay['job2']) < self.CUSTOM_PAY:
                     done = True
                     if render:
                         print("Sorry! Agent failed. No potential of earning money to pay customs")
@@ -376,8 +375,7 @@ class U_GotPackage():
         self.agent_state = StateTuple(agent_position[0], agent_position[1], 0, 0, 0,
                                       0)  # StateTuple(self.N-1, 0, 0, 0,0)
 
-        # observation = Observation(self.agent_state.position_y, self.agent_state.position_x, 0)
-        # observation_index = self.from_observation_tuple_to_index(observation)
+
         state_index = self.from_state_tuple_to_state(self.agent_state)
 
         return state_index
@@ -548,13 +546,14 @@ class U_GotPackage():
 
     def translate_q_values_to_position_grid(self, q_values_matrix):
         '''
-
+        translate q values to the game grid- translating from state index to position on the grid by using the max q values for this position
         :param q_values_matrix:
         :return:
         '''
 
         q_values_grid = np.zeros((self.N, self.N))
 
+        #Using max q values for each position
         for state_index in range(q_values_matrix.shape[0]):
             state = self.state_index2tuple[state_index]
             q_values_grid[state.position_y, state.position_x] = max(max(q_values_matrix[state_index, :]),

@@ -4,7 +4,7 @@ from .replay_memory import ReplayMemory
 from .ddpg_actor_critic_networks import Actor, Critic
 import torch.optim as optim
 import torch.nn as nn
-import utils
+from .utils import save_model, load_model
 import os
 
 
@@ -198,10 +198,10 @@ class DDPG_Agent():
         '''
 
         if filename_critic:
-            utils.save_model(self.Critic, self.optimizer_critic, models_dir, filename_critic, self.Critic_target)
+            save_model(self.Critic, self.optimizer_critic, models_dir, filename_critic, self.Critic_target)
 
         if filename_actor:
-            utils.save_model(self.Actor, self.optimizer_actor, models_dir, filename_actor, self.Actor_target)
+            save_model(self.Actor, self.optimizer_actor, models_dir, filename_actor, self.Actor_target)
 
 
     def load_model_and_optimizer(self, models_dir, filename_critic=None, filename_actor=None):
@@ -214,13 +214,13 @@ class DDPG_Agent():
         '''
 
         if filename_critic:
-            critic_state_dict, optimizer_critic_state_dict, critic_target_state_dict=utils.load_model(models_dir, filename_critic)
+            critic_state_dict, optimizer_critic_state_dict, critic_target_state_dict=load_model(models_dir, filename_critic)
             self.Critic.load_state_dict(critic_state_dict)
             self.optimizer_critic.load_state_dict(optimizer_critic_state_dict)
             self.Critic_target.load_state_dict(critic_target_state_dict)
 
         if filename_actor:
-            actor_state_dict, optimizer_actor_state_dict, actor_target_state_dict=utils.load_model(models_dir, filename_actor)
+            actor_state_dict, optimizer_actor_state_dict, actor_target_state_dict=load_model(models_dir, filename_actor)
             self.Actor.load_state_dict(actor_state_dict)
             self.optimizer_actor.load_state_dict(optimizer_actor_state_dict)
             self.Actor_target.load_state_dict(actor_target_state_dict)

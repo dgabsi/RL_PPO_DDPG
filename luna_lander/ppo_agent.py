@@ -5,7 +5,7 @@ import torch.nn as nn
 import os
 from .ppo_memory import PPOMemory
 from .ppo_networks import Actor, Critic
-import utils
+from .utils import save_model, load_model
 
 
 # gamma=0.99 , batch_size=64, critic_linear_sizes=[256,64], actor_linear_sizes=[256,64], tau=0.005, memory_capacity=100000,
@@ -13,18 +13,18 @@ import utils
 class PPO_Agent():
     '''
         This class is an implementation of PPO algorithms.
-        The agent has two netowrks - Actor the calcualtes a prbability distribution of the action and a critic that approximates the q value
-        The critic is learned through bellman equations on sampled transitions and caculating reward to go based on the trajectory
-        The actor is learned by directing the distribution in the direction leading to greater value advanatge
+        The agent has two networks - Actor the calculates a probability distribution of the action and a critic that approximates the q value
+        The critic is learned through bellman equations on sampled transitions and calculating reward to go based on the trajectory
+        The actor is learned by directing the distribution in the direction leading to greater value advantage
         The agent holds a experience memory buffer.
         The agent is also a policy class- which is implemented by outputting the actor policy -sampling from the distribution.
-        The learning is done using by running epochs on minibatches from the memory trajectories.
+        The learning is done using by running epochs on mini batches from the memory trajectories.
 
         '''
 
     def __init__(self, device, state_dim, action_dim, config_agent, writer, models_dir, checkpoint_file_actor, checkpoint_file_critic):
         '''
-        Initzaition of inner attributes. Creating the actor and critic networks, optimizers,loss function
+        Initialization of inner attributes. Creating the actor and critic networks, optimizers,loss function
         :param device: device
         :param state_dim: dimension size of states
         :param action_dim: dimension size of actions
@@ -58,8 +58,6 @@ class PPO_Agent():
         self.Actor = Actor(state_dim, action_dim, actor_linear_sizes).to(device)
         self.Critic = Critic(state_dim, critic_linear_sizes).to(device)
 
-        #self.optimizer_critic = optim.Adam(self.Critic.parameters(), **self.config_optim_critic)
-        #self.optimizer_actor = optim.Adam(self.Actor.parameters(), **self.config_optim_actor)
 
         #Joint optimizer for actor and critic
         self.optimizer_actor_critic = optim.Adam(list(self.Actor.parameters()) + list(self.Critic.parameters()), **self.config_optim)
@@ -81,7 +79,7 @@ class PPO_Agent():
         '''
 
 
-        epsilon_norm = 1e-5
+        #epsilon_norm = 1e-5
 
         values = self.ppo_memory.memory['value']
         rewards = self.ppo_memory.memory['reward']
@@ -96,7 +94,7 @@ class PPO_Agent():
         # rewards_to_go.insert(0, values_next)
 
         #loop in reverse on the values in memory and calculate the the advantages.
-        #We loop in reverse becuse the values in the future affect the former advanatgea
+        #We loop in reverse because the values in the future affect the former advanatgea
         #Rewards2go  are the advanatge+value
         for ind in reversed(range(len(values)-1)):
             delta = rewards[ind] + self.gamma * values_next * not_done[ind] - values[ind]
@@ -111,10 +109,11 @@ class PPO_Agent():
 
 
 
-        mean=torch.mean(torch.tensor(rewards_to_go))
-        std=torch.std(torch.tensor(rewards_to_go))
+        #mean=torch.mean(torch.tensor(rewards_to_go))
+        #std=torch.std(torch.tensor(rewards_to_go))
 
-        stack_r2g=torch.stack(rewards_to_go)
+        #stack_r2g=torch.stack(rewards_to_go)
+
         # normalising the rewards
 
         #rewards_to_go_norm = (stack_r2g - mean) / (std-epsilon_norm)
@@ -125,8 +124,6 @@ class PPO_Agent():
         #Store the caculated values in memory
         self.ppo_memory.add_advanatges_and_rewards2go(advantages, rewards_to_go)
 
-        # print(advantages)
-        # print(rewards_to_go_norm)
 
         return
 
@@ -192,6 +189,7 @@ class PPO_Agent():
         #Take the log probability of the action in the distribution
         log_prob = distr.log_prob(action)
 
+        #Added entropy but it is not used in final implementation
         entropy = distr.entropy()
 
         action = self.convert_inner_types_to_outer(action)
@@ -235,7 +233,6 @@ class PPO_Agent():
         if len(self.ppo_memory) < self.capacity:
             return
 
-        #self.calculate_rewards2g_and_advantages()
 
         #Calculating the advanatges and reward to go of the trajectories in the memory
         self.calculate_rewards2g_and_advantages()
@@ -252,6 +249,8 @@ class PPO_Agent():
                 batch_log_probs.detach()
                 batch_actions.detach()
                 batch_states.detach()
+
+                # Important - In the final implementation I didnt use the entropy - but it is strored from my previous attempt
 
                 self.optimizer_actor_critic.zero_grad()
                # self.optimizer_actor.zero_grad()
@@ -288,7 +287,7 @@ class PPO_Agent():
 
                 combined_loss.backward()
                 self.optimizer_actor_critic.step()
-                #self.optimizer_critic.step()
+
 
                 #For Tensorboard
                 self.writer.add_scalar('Training ppo loss', combined_loss.item(), self.global_step)
@@ -309,9 +308,9 @@ class PPO_Agent():
             :param filename_actor: checkpoint file
             :return:
         '''
-        utils.save_model(self.Critic, self.optimizer_actor_critic, models_dir, filename_critic)
+        save_model(self.Critic, self.optimizer_actor_critic, models_dir, filename_critic)
 
-        utils.save_model(self.Actor, self.optimizer_actor_critic, models_dir, filename_actor)
+        save_model(self.Actor, self.optimizer_actor_critic, models_dir, filename_actor)
 
 
 
@@ -326,8 +325,8 @@ class PPO_Agent():
             :return:
         '''
 
-        critic_state_dict, optimizer_actor_critic_state_dict, _= utils.load_model(models_dir, filename_critic)
-        actor_state_dict, _, _ = utils.load_model(models_dir, filename_actor)
+        critic_state_dict, optimizer_actor_critic_state_dict, _= load_model(models_dir, filename_critic)
+        actor_state_dict, _, _ = load_model(models_dir, filename_actor)
         self.Critic.load_state_dict(critic_state_dict)
         self.optimizer_actor_critic.load_state_dict(optimizer_actor_critic_state_dict)
         self.Actor.load_state_dict(actor_state_dict)

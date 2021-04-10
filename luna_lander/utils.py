@@ -96,7 +96,10 @@ def save_model(model, optimizer, models_dir, file_name, model2=None):
 def load_model(models_dir,file_name):
     # return state dict from a checkpoint file
 
+
+
     filename = os.path.join(models_dir,file_name)
+
     checkpoint = torch.load(filename)
     model_state_dict=checkpoint['model_state_dict']
     optimizer_state_dict=checkpoint['optimizer_state_dict']

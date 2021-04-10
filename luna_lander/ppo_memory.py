@@ -7,11 +7,16 @@ from collections import deque
 
 
 class PPOMemory:
+    '''
+    A replay memory to stroe transition and log probabilities and values calculated during experience .
+    there is also a function that add the advantages and reward2go to the memory.
+    '''
 
     def __init__(self, batch_size):
         self.batch_size = batch_size
 
         # list for storing transition and advantages and reward2go
+        #Important - In the final implementation I didnt use the entropy - but it is strored from my previous attempt
         self.memory = {'state': [], 'action': [], 'log_prob': [], 'entropy': [],
                        'reward': [], 'value': [], 'not done': [], 'advantages': [], 'rewards2go': []}
 
