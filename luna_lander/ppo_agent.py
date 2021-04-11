@@ -8,8 +8,6 @@ from .ppo_networks import Actor, Critic
 from .utils import save_model, load_model
 
 
-# gamma=0.99 , batch_size=64, critic_linear_sizes=[256,64], actor_linear_sizes=[256,64], tau=0.005, memory_capacity=100000,
-# config_optim_critic={'lr':0.003}, config_optim_actor={'lr':0.003}
 class PPO_Agent():
     '''
         This class is an implementation of PPO algorithms.

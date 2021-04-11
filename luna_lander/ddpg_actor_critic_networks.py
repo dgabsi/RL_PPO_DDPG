@@ -104,7 +104,7 @@ class Critic(nn.Module):
         # self.bn2 = nn.BatchNorm1d(linear_sizes[1])
         self.relu2 = nn.ReLU()
 
-        #self.first_layer = build_block(state_dim, linear_sizes[0], 0)
+
 
         #self.second_layer=build_block(linear_sizes[0]+action_dim, linear_sizes[1], 1)
 
@@ -112,37 +112,27 @@ class Critic(nn.Module):
         # Initalization according to ddpg paper
         nn.init.uniform(self.last_linear_layer.weight, -0.003, 0.003)
         nn.init.uniform(self.last_linear_layer.bias, -0.003, 0.003)
-        #nn.init.uniform(self.last_linear_layer.weight, -0.004, 0.004)
+
 
     def forward(self,state_inputs, action_inputs):
 
         first_layer_outputs= self.relu1(self.bn1(self.linear1(state_inputs)))
 
-        #first_layer_outputs=self.bn1(first_layer_outputs)
+
 
         actions_layer_outputs = self.linear_actions(action_inputs)
 
         second_layer_outputs = self.linear2(first_layer_outputs)
 
-        #actions_layer_outputs=self.bn_actions(actions_layer_outputs)
 
-        #second_layer_inputs = torch.cat((first_layer_outputs, action_inputs), dim=1)
 
         added_outputs=torch.add(second_layer_outputs, actions_layer_outputs)
 
 
         second_layer_outputs=self.relu2(added_outputs)
 
-        #second_layer_outputs=self.bn2(second_layer_outputs)
 
-        #first_layer_output_and_action=torch.cat(first_layer_outputs, dim=1)
-        #second_layer_outputs = self.linear2(first_layer_outputs)
 
-        #third_layer_output= self.relu3(self.bn3(self.linear3(second_layer_outputs)))
-        #According to ddpg paper actions only were added in second layer
-        #second_outputs=self.second_layer(torch.cat((first_layer_outputs, action_inputs), dim=1))
-
-       # combined_states_actions=self.relu2(self.bn2(torch.add(second_layer_outputs,action_output)))
         output = self.last_linear_layer(second_layer_outputs)
 
         return output

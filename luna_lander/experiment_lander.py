@@ -8,25 +8,7 @@ import torch
 import datetime
 from .utils import plot_all_experiments,plot_episodes,save_to_pickle
 
-'''
-SAVED_DIR='./saved'
-RUNS_DIR='./experiments'
-NUM_EPISODES=1000
 
-#configuration according to ddpg paper
-CONFIGS_LUNA_LANDER=[{'run_name':"critic:400-300 actor:400-300 lr actor 5e-5 lr critic 5e-4", 'batch_size':64, "critic_linear_sizes":[400,300], "actor_linear_sizes":[400,300],  "config_optim_actor":{'lr':0.00005},\
-                        "config_optim_critic":{"lr":0.0005}, "memory_capacity":1000000, "tau": 0.001, "gamma": 0.99, "checkpoint":None},
-                     {'run_name':"critic:600-300 actor:600-300 lr actor 5e-5 lr critic 5e-4", 'batch_size':64, "critic_linear_sizes":[600,300], "actor_linear_sizes":[600,300],  "config_optim_actor":{'lr':0.00005},\
-                        "config_optim_critic":{"lr":0.0005}, "memory_capacity":1000000, "tau": 0.001, "gamma": 0.99, "checkpoint":None},
-                     {'run_name':"critic:400-300 actor:400-300 lr actor 3e-5 lr critic 3e-4", 'batch_size':64, "critic_linear_sizes":[400,300], "actor_linear_sizes":[400,300],  "config_optim_actor":{'lr':0.00003},\
-                        "config_optim_critic":{"lr":0.0003}, "memory_capacity":1000000, "tau": 0.001, "gamma": 0.99, "checkpoint":None},
-                     {'run_name':"critic:600-300 actor:600-300 lr actor 3e-5 lr critic 3e-4", 'batch_size':64, "critic_linear_sizes":[600,300], "actor_linear_sizes":[600,300],  "config_optim_actor":{'lr':0.00003},\
-                        "config_optim_critic":{"lr":0.0003}, "memory_capacity":1000000, "tau": 0.001, "gamma": 0.99, "checkpoint":None}]
-
-
-NUM_EXPERIMENTS=2
-BATCH_SIZE=64
-'''
 
 
 def run_episodes(env, agent, writer, num_episodes, num_episodes_avg=20, train=False, save_freq=100, models_dir=None, filename_critic=None, filename_actor=None, save_rewards=150,game_solved_reward=200, render=False, agnet_type='DDPG'):
@@ -249,37 +231,4 @@ if __name__ == '__main__':
 
     print(device)
 
-    #dict_results=train_luna_lander(device, RUNS_DIR, SAVED_DIR, NUM_EPISODES, CONFIGS_LUNA_LANDER, NUM_EXPERIMENTS)
-    #utils.save_to_pickle(dict_results, os.path.join(SAVED_DIR, 'all_results_dict.pkl'))
-    '''
-    NUM_EPISODES = 10
-    BEST_LUNA_LANDER = [{'run_name': "critic:600-300_actor:600-300_lractor:3e-5_lrcritic:3e-4", 'batch_size': 64,
-                           "critic_linear_sizes": [600, 300], "actor_linear_sizes": [600, 300],
-                           "config_optim_actor": {'lr': 0.00003}, \
-                           "config_optim_critic": {"lr": 0.0003}, "memory_capacity": 1000000, "tau": 0.001,
-                           "gamma": 0.99,
-                           "checkpoint": {"critic":'ddpg_lunal_criticcritic:600-300 actor:600-300 lr actor 3e-5 lr critic 3e-4expr:_1_Final03302021 1443.pth', "actor":'ddpg_lunal_actorcritic:600-300 actor:600-300 lr actor 3e-5 lr critic 3e-4expr:_1_Final03302021 1443.pth'}}]
 
-    NUM_EXPERIMENTS = 2
-    BATCH_SIZE = 64
-    NUM_EPISODES_AVG = 20
-
-    #dict_results = experiment_luna_lander(device, RUNS_DIR, SAVED_DIR, NUM_EPISODES, BEST_LUNA_LANDER ,
-                                                      #NUM_EXPERIMENTS, num_episodes_avg=NUM_EPISODES_AVG, train=True)
-
-    NUM_EPISODES = 1000
-    RUN_DIR = './experiments/'
-    # 32batch 2048
-    # configuration according to ddpg paper
-    CONFIGS_PPO_LUNA_LANDER = [
-        {'run_name': "PPO_critic:400-300actor:400-300lr_actor_3e-5_lr_critic_3e-4", 'batch_size': 64,
-         "critic_linear_sizes": [400, 300], "actor_linear_sizes": [400, 300], "config_optim_actor": {'lr': 0.00003}, \
-         "config_optim_critic": {"lr": 0.0003}, "capacity": 1024, "lambda_smoothing": 0.95, "num_epochs": 5,
-         "gamma": 0.99, "checkpoint": None}]
-
-    NUM_EXPERIMENTS = 1
-    BATCH_SIZE = 64
-
-    dict_results = experiment_luna_lander(device, RUNS_DIR, SAVED_DIR, NUM_EPISODES, CONFIGS_PPO_LUNA_LANDER, NUM_EXPERIMENTS,
-                                          num_episodes_avg=20, train=True, agent_type='PPO')
-    '''

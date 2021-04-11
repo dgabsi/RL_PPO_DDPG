@@ -11,7 +11,7 @@ Action = namedtuple('Action', 'name index delta_y delta_x string_action')
 
 # Station can be from: post_office, bank, council_office,gp, people.
 # For each there is a reward when needed if you arrive to ta station for the first time and you have all perlimenery documents.
-# There is another reward if you already recieved the service or you do not hold all perlimenrary documents.
+# There is another reward if you already received the service or you do not hold all perlimenrary documents.
 # If the station is people the rewards are for not keeping social distancing of more than 1 cell (rewards are the same)
 Station = namedtuple('Station', 'name, grid_number, reward_success, grid_position, grid_letter, grid_color')
 

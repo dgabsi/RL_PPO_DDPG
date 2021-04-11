@@ -8,7 +8,7 @@ from collections import deque
 
 class PPOMemory:
     '''
-    A replay memory to stroe transition and log probabilities and values calculated during experience .
+    A replay memory to store transition and log probabilities and values calculated during experience .
     there is also a function that add the advantages and reward2go to the memory.
     '''
 

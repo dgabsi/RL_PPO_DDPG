@@ -22,6 +22,10 @@ Main notebooks are:
 Please fill cuda in  notebooks.
 Since running the models takes a long time I have saved trained models and pickle dictionaries containing the results statistics.
 
+**Important**- Due to the limitation in moodle file sizes. The project was compressed to two zip files
+But when extracted the **contents** should be put together. See project structure.
+
+
 Project structure:
 - luna_lander (package- task 3+4)
     - experiments (Directory for tensorboard)

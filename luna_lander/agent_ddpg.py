@@ -16,8 +16,6 @@ def au_noise(x, mean=0, std=0.2,  theta=0.15, dt=1e-2):
     return noised_x
 
 
-#gamma=0.99 , batch_size=64, critic_linear_sizes=[256,64], actor_linear_sizes=[256,64], tau=0.005, memory_capacity=100000,
-                 #config_optim_critic={'lr':0.003}, config_optim_actor={'lr':0.003}
 class DDPG_Agent():
     '''
     This class is an implementation of DDPG algorithms.
@@ -28,7 +26,7 @@ class DDPG_Agent():
     The actor is learned by performing gradient ascent on the critic values.
     The agent holds a experience memory buffer.
     The agent is also a policy class- which is implemented by outputting the actor policy.
-    The two actor and critic netowrks have two copies.A worked network and a target network.
+    The two actor and critic networks have two copies.A worked network and a target network.
     The learning is done on the local networks and after each learning there is a soft copy to the target netowrks(averaged copy according to a tau parameter).
     The soft copy and use of target networks reduces the variance of the learning processes
     '''
@@ -71,25 +69,25 @@ class DDPG_Agent():
         self.low_bound_actions=low_bound_actions
         self.high_bound_actions=high_bound_actions
 
-        self.noise= np.zeros(action_dim) #OUActionNoise(mu=np.zeros(action_dim))  #torch.zeros(action_dim)
+        self.noise= np.zeros(action_dim)
 
         #Creating actor networks
-        self.Actor=Actor(state_dim,action_dim, actor_linear_sizes).to(device) #Actor(state_dim, action_dim, actor_linear_sizes).to(device)
-        self.Actor_target=  Actor(state_dim,action_dim, actor_linear_sizes).to(device)#Actor(state_dim, action_dim, actor_linear_sizes).to(device)
+        self.Actor=Actor(state_dim,action_dim, actor_linear_sizes).to(device)
+        self.Actor_target=  Actor(state_dim,action_dim, actor_linear_sizes).to(device)
         #self.Actor_target.eval()
 
         #copy actor to actor target network
         self.Actor_target.load_state_dict(self.Actor.state_dict())
-        #self.update_network_parameters(1)
+
 
         # Creating critic networks
-        self.Critic = Critic(state_dim,action_dim, critic_linear_sizes).to(device)# CrCritic(state_dim, action_dim,  critic_linear_sizes).to(device)
-        self.Critic_target=Critic(state_dim,action_dim, critic_linear_sizes).to(device) #Critic(state_dim, action_dim, critic_linear_sizes).to(device)
-        #self.Critic_target.eval()
+        self.Critic = Critic(state_dim,action_dim, critic_linear_sizes).to(device)
+        self.Critic_target=Critic(state_dim,action_dim, critic_linear_sizes).to(device)
+
         # copy actor to critic target network
         self.Critic_target.load_state_dict(self.Critic.state_dict())
 
-        #self.update_network_parameters(1)
+
 
         self.optimizer_critic= optim.Adam(self.Critic.parameters(), **self.config_optim_critic)
         self.optimizer_actor = optim.Adam(self.Actor.parameters(), **self.config_optim_actor)
@@ -267,8 +265,7 @@ class DDPG_Agent():
         batch_q_values_curr = self.Critic(batch_state, batch_action)
         loss_critic=self.criterion_critic_mse(batch_q_values_curr, batch_target_q_values.detach())
         loss_critic.backward()
-        #for param in self.Critic.parameters():
-        #    param.grad.data.clamp_(-1, 1)
+
         self.optimizer_critic.step()
         self.writer.add_scalar('Training critic running loss', loss_critic.item(), self.global_step_critic)
         #if not self.global_step_critic % 100:

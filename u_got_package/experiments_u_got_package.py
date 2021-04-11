@@ -42,7 +42,7 @@ def run_experiments(num_experiments, num_episodes,env_search_config, agent_searc
     :param agent_search_config :different agent configurations - dictionary of lists
     :param epsilon_decay: epsilon decay rate of agent. will be multiplied in each episode
     :param epsilon_min: min epsilon value for agent
-    :return: results_dict- dicitnary containing statisitcs rsults for each configuration and episode. averaged over the experiments(Avg return, Avg num timestep, sucess rate)
+    :return: results_dict- dictionary containing statisitcs rsults for each configuration and episode. averaged over the experiments(Avg return, Avg num timestep, sucess rate)
             , q_values_dict- Q values for environment grid for each configuration. Averaged over the experiments
     '''
     results_dict={'N':[], 'customs_pay':[], 'gamma':[], 'step_size':[] ,'epsilon':[], 'episode':[],'min_reward':[], 'max_reward':[], 'avg_reward':[],'avg_timestep':[], 'avg_got_package':[]}
