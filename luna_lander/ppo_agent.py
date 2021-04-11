@@ -11,6 +11,8 @@ from .utils import save_model, load_model
 class PPO_Agent():
     '''
         This class is an implementation of PPO algorithms.
+        It follows the paper: https://arxiv.org/pdf/1707.06347.pdf
+        and also the documentation in https://spinningup.openai.com/en/latest/algorithms/ppo.html
         The agent has two networks - Actor the calculates a probability distribution of the action and a critic that approximates the q value
         The critic is learned through bellman equations on sampled transitions and calculating reward to go based on the trajectory
         The actor is learned by directing the distribution in the direction leading to greater value advantage

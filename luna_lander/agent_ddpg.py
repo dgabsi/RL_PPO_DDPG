@@ -10,6 +10,10 @@ import os
 
 
 def au_noise(x, mean=0, std=0.2,  theta=0.15, dt=1e-2):
+    '''
+    This is and implementation of the Ornstein-Uhlenbeck process https://en.wikipedia.org/wiki/Ornstein%E2%80%93Uhlenbeck_process
+    which is also mentioned in the DDPG paper https://arxiv.org/pdf/1509.02971.pdf
+    '''
 
     noised_x= x+ theta*(mean-x)*dt+std*np.sqrt(dt)*np.random.normal(size=x.shape)
 
@@ -19,6 +23,8 @@ def au_noise(x, mean=0, std=0.2,  theta=0.15, dt=1e-2):
 class DDPG_Agent():
     '''
     This class is an implementation of DDPG algorithms.
+    It follows the paper CONTINUOUS CONTROL WITH DEEP REINFORCEMENT LEARNING :https://arxiv.org/pdf/1509.02971.pdf
+
     The agent learns the policy by using two networks-an Actor and a critic.
     The Actor is responsible to calculating the policy
     The critic is determines via approximating q values whether the actor policy performs weell.
@@ -222,18 +228,6 @@ class DDPG_Agent():
             self.Actor.load_state_dict(actor_state_dict)
             self.optimizer_actor.load_state_dict(optimizer_actor_state_dict)
             self.Actor_target.load_state_dict(actor_target_state_dict)
-
-    def update_auc_noise(self, mean=0, std=0.2,  theta=0.15, dt=1e-2):
-
-        action_dim=torch.ones(self.action_dim)
-
-        mean=mean*action_dim
-        std=std*action_dim
-
-        added_noise= self.noise+ theta*(mean-self.noise)*dt+std*np.sqrt(dt)*np.random.normal(size=mean.shape)
-        self.noise=added_noise
-
-        return self.noise
 
 
     def train(self):
