@@ -1,4 +1,4 @@
-# 707 project
+# reinforcement learning DDPG and PPO for Moon Lander
 # Code for course Reinforcement learning
 ### Daniela Stern- Gabsi
 
